@@ -3,37 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PortuguesePractice_index</title>
+<title>Portuguese Practice v0.1.1</title>
+
 <style>
 body {font-family: Arial; padding: 15px; background:#f4f4f2;}
 select, button {width:100%; padding:12px; margin-top:10px;}
 .word {font-size:36px; text-align:center; margin-top:15px;}
+.note {text-align:center; margin-top:10px; color:#555;}
 </style>
 </head>
+
 <body>
 
 <h2>Portuguese Pronunciation Practice</h2>
+<div>Version 0.1.1</div>
 
 <select id="ruleSelect"></select>
 
 <div class="word" id="wordText"></div>
+<div class="note" id="noteText"></div>
 
 <button onclick="speak()">🔊 Hear model</button>
 
 <script>
 const ITEMS = [
- {rule:"Final s → sh", word:"livros"},
- {rule:"Weak vowels", word:"telefone"},
- {rule:"Throaty r", word:"carro"},
- {rule:"Hard t", word:"noite"},
- {rule:"Hard d", word:"cidade"},
- {rule:"Dark l", word:"Portugal"},
- {rule:"lh", word:"filho"},
- {rule:"nh", word:"vinho"}
+ {rule:"Final s → sh", word:"livros", note:"Final s becomes sh"},
+ {rule:"Weak vowels", word:"telefone", note:"Unstressed vowels weaken"},
+ {rule:"Throaty r", word:"carro", note:"French-style r"},
+ {rule:"Hard t", word:"noite", note:"T stays t"},
+ {rule:"Hard d", word:"cidade", note:"D stays d"},
+ {rule:"Dark l", word:"Portugal", note:"Dark L"},
+ {rule:"lh", word:"filho", note:"Like 'lyo'"},
+ {rule:"nh", word:"vinho", note:"Like 'nyo'"}
 ];
 
 const select = document.getElementById("ruleSelect");
 const wordText = document.getElementById("wordText");
+const noteText = document.getElementById("noteText");
 
 ITEMS.forEach((item,i)=>{
  let o=document.createElement("option");
@@ -47,6 +53,7 @@ update();
 
 function update(){
  wordText.innerText = ITEMS[select.value].word;
+ noteText.innerText = ITEMS[select.value].note;
 }
 
 function speak(){
