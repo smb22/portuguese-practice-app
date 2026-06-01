@@ -1,48 +1,100 @@
-<!doctype html>
+from pathlib import Path
+
+version = "0.2.1"
+filename = f"PortuguesePractice_v{version}.html"
+
+rules = {
+ "Final s → sh": [
+     ("livros", "LEE-vrosh", "Final s becomes sh, not plain s."),
+     ("dois", "doysh", "Finish with sh."),
+     ("portugueses", "por-tu-GAY-zesh", "Final s becomes sh.")
+ ],
+ "Weak vowels": [
+     ("telefone", "tl-FON", "Do not pronounce every written vowel."),
+     ("pequeno", "p-KE-no", "First vowel weakens."),
+     ("presidente", "pr-zi-DENT", "Compressed, not vowel-rich.")
+ ],
+ "Throaty r": [
+     ("carro", "KAH-ho", "Double rr is throaty, like French r."),
+     ("rua", "HOO-ah", "Initial r is throaty."),
+     ("arroz", "ah-HOZH", "Throaty rr; final z is not simple z.")
+ ],
+ "Hard t": [
+     ("noite", "NOY-tuh", "T stays t, not ch."),
+     ("vinte", "VEEN-tuh", "Not veen-chee."),
+     ("tia", "TEE-ah", "Not chee-ah.")
+ ],
+ "Hard d": [
+     ("cidade", "si-DAHD", "D stays d, not j."),
+     ("dia", "DEE-ah", "Not jee-ah."),
+     ("saudade", "sow-DAHD", "Avoid jee ending.")
+ ],
+ "Dark l": [
+     ("Portugal", "por-tu-GAHL", "Final l is dark, like bell or pull."),
+     ("Brasil", "bra-ZEEL", "End with l, not oo."),
+     ("papel", "pa-PELL", "Final l is dark.")
+ ],
+ "lh": [
+     ("filho", "FEE-lyo", "lh sounds like lli in million."),
+     ("trabalho", "tra-BA-lyo", "Do not say lee-ho."),
+     ("velha", "VEL-ya", "Crisp ly sound.")
+ ],
+ "nh": [
+     ("vinho", "VEEN-yo", "nh sounds like ny in canyon."),
+     ("senhor", "sen-YOR", "Use ny, not h."),
+     ("amanhã", "a-ma-NYAH", "Nasal ending; ny sound.")
+ ]
+}
+
+import json
+data_js = json.dumps(rules, ensure_ascii=False)
+
+html = f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Portuguese Practice v0.2.0</title>
-
+<title>Portuguese Practice v{version}</title>
 <style>
-body {
+body {{
   font-family: Arial, sans-serif;
   padding: 15px;
   background: #f4f4f2;
-}
-select, button {
+}}
+select, button {{
   width: 100%;
   padding: 12px;
   margin-top: 10px;
   font-size: 18px;
-}
-.word {
+}}
+.word {{
   font-size: 40px;
   text-align: center;
   margin-top: 15px;
   font-weight: bold;
-}
-.note, .say, .status {
+}}
+.note, .say, .status {{
   text-align: center;
   margin-top: 10px;
-}
-audio {
+}}
+.say {{
+  font-size: 22px;
+  font-weight: bold;
+}}
+audio {{
   width: 100%;
   margin-top: 12px;
-}
-.small {
+}}
+.small {{
   margin-top: 18px;
   font-size: 15px;
   color: #555;
-}
+}}
 </style>
 </head>
-
 <body>
-
 <h2>Portuguese Pronunciation Practice</h2>
-<div>Version 0.2.0 · structured drill build</div>
+<div>Version {version} · restored pronunciation hints</div>
 
 <label for="ruleSelect">Choose a rule</label>
 <select id="ruleSelect"></select>
@@ -63,20 +115,12 @@ audio {
 <div class="status" id="statusText"></div>
 
 <div class="small">
-Cycle: hear → record → replay → retry or next
+Cycle: hear → record → replay → retry or next.
+<br>Chrome on Android is preferred for recording. Firefox may allow permission but still fail to record.
 </div>
 
 <script>
-const DATA = {
- "Final s → sh": ["livros","dois","portugueses"],
- "Weak vowels": ["telefone","pequeno","presidente"],
- "Throaty r": ["carro","rua","arroz"],
- "Hard t": ["noite","vinte","tia"],
- "Hard d": ["cidade","dia","saudade"],
- "Dark l": ["Portugal","Brasil","papel"],
- "lh": ["filho","trabalho","velha"],
- "nh": ["vinho","senhor","amanhã"]
-};
+const DATA = {data_js};
 
 const select = document.getElementById("ruleSelect");
 const wordText = document.getElementById("wordText");
@@ -89,83 +133,92 @@ const stopBtn = document.getElementById("stopBtn");
 let currentRule = "";
 let words = [];
 let index = 0;
-let recorder;
+let recorder = null;
 let chunks = [];
 
-for (let rule in DATA) {
- let o = document.createElement("option");
- o.text = rule;
- select.appendChild(o);
-}
+for (let rule in DATA) {{
+  let o = document.createElement("option");
+  o.text = rule;
+  select.appendChild(o);
+}}
 
 select.onchange = loadRule;
 loadRule();
 
-function loadRule() {
- currentRule = select.value;
- words = DATA[currentRule];
- index = 0;
- update();
-}
+function loadRule() {{
+  currentRule = select.value;
+  words = DATA[currentRule];
+  index = 0;
+  update();
+}}
 
-function update() {
- let w = words[index];
- wordText.innerText = w;
- sayText.innerText = "Say it clearly";
- noteText.innerText = currentRule;
- statusText.innerText = "";
-}
+function update() {{
+  let item = words[index];
+  wordText.innerText = item[0];
+  sayText.innerText = "Say: " + item[1];
+  noteText.innerText = item[2];
+  statusText.innerText = "";
+}}
 
-function nextWord() {
- index = (index + 1) % words.length;
- update();
-}
+function nextWord() {{
+  index = (index + 1) % words.length;
+  update();
+}}
 
-function retry() {
- statusText.innerText = "Try again";
-}
+function retry() {{
+  statusText.innerText = "Retry once: hear model, then record again.";
+}}
 
-function speak() {
- speechSynthesis.cancel();
- let u = new SpeechSynthesisUtterance(wordText.innerText);
- u.lang = "pt-PT";
- u.rate = 0.75;
- speechSynthesis.speak(u);
-}
+function speak() {{
+  speechSynthesis.cancel();
+  let item = words[index];
+  let u = new SpeechSynthesisUtterance(item[0]);
+  u.lang = "pt-PT";
+  u.rate = 0.75;
+  speechSynthesis.speak(u);
+  statusText.innerText = "Playing model.";
+}}
 
-function startCountdown() {
- statusText.innerText = "Recording in 2...";
- setTimeout(()=>statusText.innerText="Recording in 1...",1000);
- setTimeout(startRecording,2000);
-}
+function startCountdown() {{
+  speechSynthesis.cancel();
+  statusText.innerText = "Recording in 2...";
+  setTimeout(()=>statusText.innerText="Recording in 1...",1000);
+  setTimeout(startRecording,2000);
+}}
 
-async function startRecording() {
- try {
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  recorder = new MediaRecorder(stream);
-  chunks = [];
+async function startRecording() {{
+  try {{
+    const stream = await navigator.mediaDevices.getUserMedia({{audio:true}});
+    recorder = new MediaRecorder(stream);
+    chunks = [];
 
-  recorder.ondataavailable = e => chunks.push(e.data);
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, {type:"audio/webm"});
-    playback.src = URL.createObjectURL(blob);
-    statusText.innerText = "Replay and compare";
-    stream.getTracks().forEach(t=>t.stop());
-  };
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {{
+      const blob = new Blob(chunks, {{type:"audio/webm"}});
+      playback.src = URL.createObjectURL(blob);
+      statusText.innerText = "Replay and compare.";
+      stream.getTracks().forEach(t=>t.stop());
+    }};
 
-  recorder.start();
-  stopBtn.disabled = false;
-  statusText.innerText = "Recording...";
- } catch(e) {
-  statusText.innerText = "Mic blocked";
- }
-}
+    recorder.start();
+    stopBtn.disabled = false;
+    statusText.innerText = "Recording...";
+  }} catch(e) {{
+    statusText.innerText = "Mic blocked or unsupported in this browser.";
+  }}
+}}
 
-function stopRecording() {
- recorder.stop();
+function stopRecording() {{
+  if (recorder && recorder.state !== "inactive") {{
+    recorder.stop();
+  }}
   stopBtn.disabled = true;
-}
+}}
 </script>
-
 </body>
 </html>
+"""
+
+path = Path("/mnt/data") / filename
+path.write_text(html, encoding="utf-8")
+print(path)
