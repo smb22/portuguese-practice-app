@@ -3,63 +3,165 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Portuguese Practice v0.1.1</title>
+<title>Portuguese Practice v0.1.2</title>
 
 <style>
-body {font-family: Arial; padding: 15px; background:#f4f4f2;}
-select, button {width:100%; padding:12px; margin-top:10px;}
-.word {font-size:36px; text-align:center; margin-top:15px;}
-.note {text-align:center; margin-top:10px; color:#555;}
+body {
+  font-family: Arial, sans-serif;
+  padding: 15px;
+  background: #f4f4f2;
+}
+select, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 18px;
+}
+.word {
+  font-size: 40px;
+  text-align: center;
+  margin-top: 15px;
+  font-weight: bold;
+}
+.note, .say, .status {
+  text-align: center;
+  margin-top: 10px;
+}
+audio {
+  width: 100%;
+  margin-top: 12px;
+}
+.small {
+  margin-top: 18px;
+  font-size: 15px;
+  color: #555;
+}
 </style>
 </head>
 
 <body>
 
 <h2>Portuguese Pronunciation Practice</h2>
-<div>Version 0.1.1</div>
+<div>Version 0.1.2 · 8-rule record/replay build</div>
 
+<label for="ruleSelect">Choose one of the 8 rules</label>
 <select id="ruleSelect"></select>
 
 <div class="word" id="wordText"></div>
+<div class="say" id="sayText"></div>
 <div class="note" id="noteText"></div>
 
 <button onclick="speak()">🔊 Hear model</button>
+<button id="recordBtn" onclick="startRecording()">🎙️ Record me</button>
+<button id="stopBtn" onclick="stopRecording()" disabled>⏹ Stop recording</button>
+
+<audio id="playback" controls></audio>
+
+<button onclick="goodEnough()">Good enough</button>
+<button onclick="retryOnce()">Retry once</button>
+
+<div class="status" id="statusText"></div>
+
+<div class="small">
+Cycle: choose rule → hear model → record → replay → good enough or retry once.
+</div>
 
 <script>
 const ITEMS = [
- {rule:"Final s → sh", word:"livros", note:"Final s becomes sh"},
- {rule:"Weak vowels", word:"telefone", note:"Unstressed vowels weaken"},
- {rule:"Throaty r", word:"carro", note:"French-style r"},
- {rule:"Hard t", word:"noite", note:"T stays t"},
- {rule:"Hard d", word:"cidade", note:"D stays d"},
- {rule:"Dark l", word:"Portugal", note:"Dark L"},
- {rule:"lh", word:"filho", note:"Like 'lyo'"},
- {rule:"nh", word:"vinho", note:"Like 'nyo'"}
+ {rule:"1. Final s → sh", word:"livros", say:"LEE-vrosh", note:"Final s becomes sh, not plain s."},
+ {rule:"2. Weak vowels", word:"telefone", say:"tl-FON", note:"Unstressed vowels weaken or disappear."},
+ {rule:"3. Throaty r / rr", word:"carro", say:"KAH-ho", note:"Double rr is throaty, like French r."},
+ {rule:"4. Hard t", word:"noite", say:"NOY-tuh", note:"T stays t, not ch."},
+ {rule:"5. Hard d", word:"cidade", say:"si-DAHD", note:"D stays d, not j."},
+ {rule:"6. Dark final l", word:"Portugal", say:"por-tu-GAHL", note:"Final l is dark, like bell or pull."},
+ {rule:"7. lh", word:"filho", say:"FEE-lyo", note:"lh sounds like lli in million."},
+ {rule:"8. nh", word:"vinho", say:"VEEN-yo", note:"nh sounds like ny in canyon."}
 ];
 
 const select = document.getElementById("ruleSelect");
 const wordText = document.getElementById("wordText");
+const sayText = document.getElementById("sayText");
 const noteText = document.getElementById("noteText");
+const statusText = document.getElementById("statusText");
+const playback = document.getElementById("playback");
+const recordBtn = document.getElementById("recordBtn");
+const stopBtn = document.getElementById("stopBtn");
 
-ITEMS.forEach((item,i)=>{
- let o=document.createElement("option");
- o.value=i;
- o.text=item.rule;
- select.appendChild(o);
+let mediaRecorder = null;
+let chunks = [];
+
+ITEMS.forEach((item, i) => {
+  let o = document.createElement("option");
+  o.value = i;
+  o.text = item.rule;
+  select.appendChild(o);
 });
 
 select.onchange = update;
 update();
 
-function update(){
- wordText.innerText = ITEMS[select.value].word;
- noteText.innerText = ITEMS[select.value].note;
+function currentItem() {
+  return ITEMS[select.value];
 }
 
-function speak(){
- let u = new SpeechSynthesisUtterance(wordText.innerText);
- u.lang = "pt-PT";
- speechSynthesis.speak(u);
+function update() {
+  const item = currentItem();
+  wordText.innerText = item.word;
+  sayText.innerText = "Say: " + item.say;
+  noteText.innerText = item.note;
+  statusText.innerText = "";
+}
+
+function speak() {
+  const item = currentItem();
+  let u = new SpeechSynthesisUtterance(item.word);
+  u.lang = "pt-PT";
+  u.rate = 0.75;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+  statusText.innerText = "Playing model.";
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    chunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = e => {
+      chunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: "audio/webm" });
+      playback.src = URL.createObjectURL(blob);
+      stream.getTracks().forEach(track => track.stop());
+      statusText.innerText = "Recording ready. Play it back and compare.";
+    };
+
+    mediaRecorder.start();
+    recordBtn.disabled = true;
+    stopBtn.disabled = false;
+    statusText.innerText = "Recording...";
+  } catch (err) {
+    statusText.innerText = "Microphone blocked or unavailable.";
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+  }
+  recordBtn.disabled = false;
+  stopBtn.disabled = true;
+}
+
+function goodEnough() {
+  statusText.innerText = "Good enough. Choose another rule.";
+}
+
+function retryOnce() {
+  statusText.innerText = "Retry once: hear model, then record again.";
 }
 </script>
 
