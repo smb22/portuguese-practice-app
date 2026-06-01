@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PortuguesePractice_index</title>
+<style>
+body {font-family: Arial; padding: 15px; background:#f4f4f2;}
+select, button {width:100%; padding:12px; margin-top:10px;}
+.word {font-size:36px; text-align:center; margin-top:15px;}
+</style>
+</head>
+<body>
+
+<h2>Portuguese Pronunciation Practice</h2>
+
+<select id="ruleSelect"></select>
+
+<div class="word" id="wordText"></div>
+
+<button onclick="speak()">🔊 Hear model</button>
+
+<script>
+const ITEMS = [
+ {rule:"Final s → sh", word:"livros"},
+ {rule:"Weak vowels", word:"telefone"},
+ {rule:"Throaty r", word:"carro"},
+ {rule:"Hard t", word:"noite"},
+ {rule:"Hard d", word:"cidade"},
+ {rule:"Dark l", word:"Portugal"},
+ {rule:"lh", word:"filho"},
+ {rule:"nh", word:"vinho"}
+];
+
+const select = document.getElementById("ruleSelect");
+const wordText = document.getElementById("wordText");
+
+ITEMS.forEach((item,i)=>{
+ let o=document.createElement("option");
+ o.value=i;
+ o.text=item.rule;
+ select.appendChild(o);
+});
+
+select.onchange = update;
+update();
+
+function update(){
+ wordText.innerText = ITEMS[select.value].word;
+}
+
+function speak(){
+ let u = new SpeechSynthesisUtterance(wordText.innerText);
+ u.lang = "pt-PT";
+ speechSynthesis.speak(u);
+}
+</script>
+
+</body>
+</html>
