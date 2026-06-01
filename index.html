@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Portuguese Practice v0.1.2</title>
+<title>Portuguese Practice v0.2.0</title>
 
 <style>
 body {
@@ -42,9 +42,9 @@ audio {
 <body>
 
 <h2>Portuguese Pronunciation Practice</h2>
-<div>Version 0.1.2 · 8-rule record/replay build</div>
+<div>Version 0.2.0 · structured drill build</div>
 
-<label for="ruleSelect">Choose one of the 8 rules</label>
+<label for="ruleSelect">Choose a rule</label>
 <select id="ruleSelect"></select>
 
 <div class="word" id="wordText"></div>
@@ -52,31 +52,31 @@ audio {
 <div class="note" id="noteText"></div>
 
 <button onclick="speak()">🔊 Hear model</button>
-<button id="recordBtn" onclick="startRecording()">🎙️ Record me</button>
-<button id="stopBtn" onclick="stopRecording()" disabled>⏹ Stop recording</button>
+<button onclick="startCountdown()">🎙️ Record me</button>
+<button onclick="stopRecording()" id="stopBtn" disabled>⏹ Stop</button>
 
 <audio id="playback" controls></audio>
 
-<button onclick="goodEnough()">Good enough</button>
-<button onclick="retryOnce()">Retry once</button>
+<button onclick="nextWord()">➡️ Next word</button>
+<button onclick="retry()">🔁 Retry</button>
 
 <div class="status" id="statusText"></div>
 
 <div class="small">
-Cycle: choose rule → hear model → record → replay → good enough or retry once.
+Cycle: hear → record → replay → retry or next
 </div>
 
 <script>
-const ITEMS = [
- {rule:"1. Final s → sh", word:"livros", say:"LEE-vrosh", note:"Final s becomes sh, not plain s."},
- {rule:"2. Weak vowels", word:"telefone", say:"tl-FON", note:"Unstressed vowels weaken or disappear."},
- {rule:"3. Throaty r / rr", word:"carro", say:"KAH-ho", note:"Double rr is throaty, like French r."},
- {rule:"4. Hard t", word:"noite", say:"NOY-tuh", note:"T stays t, not ch."},
- {rule:"5. Hard d", word:"cidade", say:"si-DAHD", note:"D stays d, not j."},
- {rule:"6. Dark final l", word:"Portugal", say:"por-tu-GAHL", note:"Final l is dark, like bell or pull."},
- {rule:"7. lh", word:"filho", say:"FEE-lyo", note:"lh sounds like lli in million."},
- {rule:"8. nh", word:"vinho", say:"VEEN-yo", note:"nh sounds like ny in canyon."}
-];
+const DATA = {
+ "Final s → sh": ["livros","dois","portugueses"],
+ "Weak vowels": ["telefone","pequeno","presidente"],
+ "Throaty r": ["carro","rua","arroz"],
+ "Hard t": ["noite","vinte","tia"],
+ "Hard d": ["cidade","dia","saudade"],
+ "Dark l": ["Portugal","Brasil","papel"],
+ "lh": ["filho","trabalho","velha"],
+ "nh": ["vinho","senhor","amanhã"]
+};
 
 const select = document.getElementById("ruleSelect");
 const wordText = document.getElementById("wordText");
@@ -84,84 +84,86 @@ const sayText = document.getElementById("sayText");
 const noteText = document.getElementById("noteText");
 const statusText = document.getElementById("statusText");
 const playback = document.getElementById("playback");
-const recordBtn = document.getElementById("recordBtn");
 const stopBtn = document.getElementById("stopBtn");
 
-let mediaRecorder = null;
+let currentRule = "";
+let words = [];
+let index = 0;
+let recorder;
 let chunks = [];
 
-ITEMS.forEach((item, i) => {
-  let o = document.createElement("option");
-  o.value = i;
-  o.text = item.rule;
-  select.appendChild(o);
-});
+for (let rule in DATA) {
+ let o = document.createElement("option");
+ o.text = rule;
+ select.appendChild(o);
+}
 
-select.onchange = update;
-update();
+select.onchange = loadRule;
+loadRule();
 
-function currentItem() {
-  return ITEMS[select.value];
+function loadRule() {
+ currentRule = select.value;
+ words = DATA[currentRule];
+ index = 0;
+ update();
 }
 
 function update() {
-  const item = currentItem();
-  wordText.innerText = item.word;
-  sayText.innerText = "Say: " + item.say;
-  noteText.innerText = item.note;
-  statusText.innerText = "";
+ let w = words[index];
+ wordText.innerText = w;
+ sayText.innerText = "Say it clearly";
+ noteText.innerText = currentRule;
+ statusText.innerText = "";
+}
+
+function nextWord() {
+ index = (index + 1) % words.length;
+ update();
+}
+
+function retry() {
+ statusText.innerText = "Try again";
 }
 
 function speak() {
-  const item = currentItem();
-  let u = new SpeechSynthesisUtterance(item.word);
-  u.lang = "pt-PT";
-  u.rate = 0.75;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-  statusText.innerText = "Playing model.";
+ speechSynthesis.cancel();
+ let u = new SpeechSynthesisUtterance(wordText.innerText);
+ u.lang = "pt-PT";
+ u.rate = 0.75;
+ speechSynthesis.speak(u);
+}
+
+function startCountdown() {
+ statusText.innerText = "Recording in 2...";
+ setTimeout(()=>statusText.innerText="Recording in 1...",1000);
+ setTimeout(startRecording,2000);
 }
 
 async function startRecording() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    chunks = [];
-    mediaRecorder = new MediaRecorder(stream);
+ try {
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  recorder = new MediaRecorder(stream);
+  chunks = [];
 
-    mediaRecorder.ondataavailable = e => {
-      chunks.push(e.data);
-    };
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, {type:"audio/webm"});
+    playback.src = URL.createObjectURL(blob);
+    statusText.innerText = "Replay and compare";
+    stream.getTracks().forEach(t=>t.stop());
+  };
 
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: "audio/webm" });
-      playback.src = URL.createObjectURL(blob);
-      stream.getTracks().forEach(track => track.stop());
-      statusText.innerText = "Recording ready. Play it back and compare.";
-    };
-
-    mediaRecorder.start();
-    recordBtn.disabled = true;
-    stopBtn.disabled = false;
-    statusText.innerText = "Recording...";
-  } catch (err) {
-    statusText.innerText = "Microphone blocked or unavailable.";
-  }
+  recorder.start();
+  stopBtn.disabled = false;
+  statusText.innerText = "Recording...";
+ } catch(e) {
+  statusText.innerText = "Mic blocked";
+ }
 }
 
 function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== "inactive") {
-    mediaRecorder.stop();
-  }
-  recordBtn.disabled = false;
+ recorder.stop();
   stopBtn.disabled = true;
-}
-
-function goodEnough() {
-  statusText.innerText = "Good enough. Choose another rule.";
-}
-
-function retryOnce() {
-  statusText.innerText = "Retry once: hear model, then record again.";
 }
 </script>
 
