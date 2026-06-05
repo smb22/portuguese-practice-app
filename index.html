@@ -1,194 +1,242 @@
-<!doctype html>
+from pathlib import Path
+
+html = r'''<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Portuguese Practice v0.2.2</title>
+<title>Portuguese Practice v0.3.0</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 14px;
-    background: #f4f4f2;
-    color: #222;
-  }
-  main {
-    max-width: 520px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 14px;
-    padding: 14px;
-    border: 1px solid #ddd;
-  }
-  h2 {
-    margin: 0 0 4px 0;
-    font-size: 22px;
-  }
-  .version {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 12px;
-  }
-  label {
-    display: block;
-    font-weight: bold;
-    margin: 12px 0 6px 0;
-  }
-  select, button {
-    width: 100%;
-    font-size: 18px;
-    padding: 12px;
-    margin-top: 8px;
-    border-radius: 9px;
-    border: 1px solid #999;
-    background: white;
-  }
-  .display {
-    margin: 14px 0;
-    padding: 14px;
-    border-radius: 12px;
-    background: #fafafa;
-    text-align: center;
-  }
-  .word {
-    font-size: 42px;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-  .pron {
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-  .hint {
-    font-size: 16px;
-    color: #555;
-  }
-  audio {
-    width: 100%;
-    margin-top: 10px;
-  }
-  .status {
-    min-height: 24px;
-    margin-top: 10px;
-    text-align: center;
-    font-weight: bold;
-  }
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  .small {
-    margin-top: 12px;
-    font-size: 14px;
-    color: #555;
-    line-height: 1.35;
-  }
+ body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 14px;
+  background: #f4f4f2;
+  color: #222;
+ }
+ main {
+  max-width: 540px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid #ddd;
+ }
+ h2 {
+  margin: 0 0 4px 0;
+  font-size: 22px;
+ }
+ .version {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+ }
+ label {
+  display: block;
+  font-weight: bold;
+  margin: 12px 0 6px 0;
+ }
+ select, button {
+  width: 100%;
+  font-size: 18px;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 9px;
+  border: 1px solid #999;
+  background: white;
+ }
+ .display {
+  margin: 14px 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fafafa;
+  text-align: center;
+ }
+ .word {
+  font-size: 42px;
+  font-weight: bold;
+  margin-bottom: 8px;
+ }
+ .pron {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 8px;
+ }
+ .hint {
+  font-size: 16px;
+  color: #555;
+ }
+ .feedback {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f6f7fb;
+  border: 1px solid #d8dbe8;
+  line-height: 1.35;
+ }
+ .feedback-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+ }
+ audio {
+  width: 100%;
+  margin-top: 10px;
+ }
+ .status {
+  min-height: 24px;
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+ }
+ .row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+ }
+ .small {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.35;
+ }
 </style>
 </head>
-
 <body>
 <main>
-  <h2>Portuguese Pronunciation Practice</h2>
-  <div class="version">Version 0.2.2 · compact dashboard build</div>
+ <h2>Portuguese Pronunciation Practice</h2>
+ <div class="version">Version 0.3.0 · corrective perceptual feedback build</div>
 
-  <label for="ruleSelect">Rule</label>
-  <select id="ruleSelect"></select>
+ <label for="ruleSelect">Rule</label>
+ <select id="ruleSelect"></select>
 
-  <label for="wordSelect">Word / phrase</label>
-  <select id="wordSelect"></select>
+ <label for="wordSelect">Word / phrase</label>
+ <select id="wordSelect"></select>
 
-  <div class="display">
-    <div class="word" id="wordText">livros</div>
-    <div class="pron" id="pronText">Say: LEE-vrosh</div>
-    <div class="hint" id="hintText">Final s becomes sh, not plain s.</div>
-  </div>
+ <div class="display">
+  <div class="word" id="wordText">livros</div>
+  <div class="pron" id="pronText">Say: LEE-vrosh</div>
+  <div class="hint" id="hintText">Final s becomes sh, not plain s.</div>
+ </div>
 
-  <button id="speakBtn" type="button">🔊 Hear model</button>
-  <button id="recordBtn" type="button">🎙️ Record me</button>
-  <button id="stopBtn" type="button" disabled>⏹ Stop recording</button>
+ <button id="speakBtn" type="button">🔊 Hear model</button>
+ <button id="recordBtn" type="button">🎙️ Record me</button>
+ <button id="stopBtn" type="button" disabled>⏹ Stop recording</button>
 
-  <audio id="playback" controls></audio>
+ <audio id="playback" controls></audio>
 
-  <div class="row">
-    <button id="retryBtn" type="button">🔁 Retry</button>
-    <button id="nextBtn" type="button">➡️ Next</button>
-  </div>
+ <div class="feedback" id="feedbackBox">
+  <div class="feedback-title">Perceptual focus</div>
+  <div id="feedbackText">Hear the model, record yourself, then compare your ending sound with the target.</div>
+ </div>
 
-  <div class="status" id="statusText"></div>
+ <div class="row">
+  <button id="goodBtn" type="button">✅ I hear it</button>
+  <button id="againBtn" type="button">🔁 Not yet</button>
+ </div>
 
-  <div class="small">
-    Target browser: Chrome on Android. Firefox may speak poorly and may not record even when permission is granted.
-  </div>
+ <div class="row">
+  <button id="retryBtn" type="button"> Retry</button>
+  <button id="nextBtn" type="button">➡️ Next</button>
+ </div>
+
+ <div class="status" id="statusText"></div>
+
+ <div class="small">
+  Target browser: Chrome on Android. Firefox may speak poorly and may not record even when permission is granted.
+  This build does not automatically judge pronunciation. It arranges feedback so the learner can perceive the relevant contrast.
+ </div>
 </main>
 
 <script>
 const DATA = [
-  {
-    rule: "Final s → sh",
-    items: [
-      {word:"livros", pron:"LEE-vrosh", hint:"Final s becomes sh, not plain s."},
-      {word:"dois", pron:"doysh", hint:"Finish with sh."},
-      {word:"portugueses", pron:"por-tu-GAY-zesh", hint:"Final s becomes sh."}
-    ]
-  },
-  {
-    rule: "Weak vowels",
-    items: [
-      {word:"telefone", pron:"tl-FON", hint:"Do not pronounce every written vowel."},
-      {word:"pequeno", pron:"p-KE-no", hint:"First vowel weakens."},
-      {word:"presidente", pron:"pr-zi-DENT", hint:"Compressed, not vowel-rich."}
-    ]
-  },
-  {
-    rule: "Throaty r / rr",
-    items: [
-      {word:"carro", pron:"KAH-ho", hint:"Double rr is throaty, like French r."},
-      {word:"rua", pron:"HOO-ah", hint:"Initial r is throaty."},
-      {word:"arroz", pron:"ah-HOZH", hint:"Throaty rr; final z is not simple z."}
-    ]
-  },
-  {
-    rule: "Hard t",
-    items: [
-      {word:"noite", pron:"NOY-tuh", hint:"T stays t, not ch."},
-      {word:"vinte", pron:"VEEN-tuh", hint:"Not veen-chee."},
-      {word:"tia", pron:"TEE-ah", hint:"Not chee-ah."}
-    ]
-  },
-  {
-    rule: "Hard d",
-    items: [
-      {word:"cidade", pron:"si-DAHD", hint:"D stays d, not j."},
-      {word:"dia", pron:"DEE-ah", hint:"Not jee-ah."},
-      {word:"saudade", pron:"sow-DAHD", hint:"Avoid jee ending."}
-    ]
-  },
-  {
-    rule: "Dark l",
-    items: [
-      {word:"Portugal", pron:"por-tu-GAHL", hint:"Final l is dark, like bell or pull."},
-      {word:"Brasil", pron:"bra-ZEEL", hint:"End with l, not oo."},
-      {word:"papel", pron:"pa-PELL", hint:"Final l is dark."}
-    ]
-  },
-  {
-    rule: "lh",
-    items: [
-      {word:"filho", pron:"FEE-lyo", hint:"lh sounds like lli in million."},
-      {word:"trabalho", pron:"tra-BA-lyo", hint:"Do not say lee-ho."},
-      {word:"velha", pron:"VEL-ya", hint:"Crisp ly sound."}
-    ]
-  },
-  {
-    rule: "nh",
-    items: [
-      {word:"vinho", pron:"VEEN-yo", hint:"nh sounds like ny in canyon."},
-      {word:"senhor", pron:"sen-YOR", hint:"Use ny, not h."},
-      {word:"amanhã", pron:"a-ma-NYAH", hint:"Nasal ending; ny sound."}
-    ]
-  }
+ {
+  rule: "Final s → sh",
+  focus: "Listen for the final sound. In European Portuguese, many final s sounds become sh. The contrast to perceive is plain s versus sh.",
+  correction: "Try again with the ending softened into sh. Do not finish with a bright English s.",
+  success: "Good. You are hearing the final sh contrast.",
+  items: [
+   {word:"livros", pron:"LEE-vrosh", hint:"Final s becomes sh, not plain s."},
+   {word:"dois", pron:"doysh", hint:"Finish with sh."},
+   {word:"portugueses", pron:"por-tu-GAY-zesh", hint:"Final s becomes sh."}
+  ]
+ },
+ {
+  rule: "Weak vowels",
+  focus: "Listen for compression. European Portuguese often reduces unstressed vowels. The contrast to perceive is full vowel spelling versus compressed spoken form.",
+  correction: "Try again with fewer full vowels. Let the unstressed vowels become small or nearly disappear.",
+  success: "Good. You are hearing the compressed vowel pattern.",
+  items: [
+   {word:"telefone", pron:"tl-FON", hint:"Do not pronounce every written vowel."},
+   {word:"pequeno", pron:"p-KE-no", hint:"First vowel weakens."},
+   {word:"presidente", pron:"pr-zi-DENT", hint:"Compressed, not vowel-rich."}
+  ]
+ },
+ {
+  rule: "Throaty r / rr",
+  focus: "Listen for the back-of-throat r. Initial r and rr are not an American r. The contrast to perceive is front-mouth r versus throaty r.",
+  correction: "Try again with the r farther back in the throat, closer to French r or a soft h.",
+  success: "Good. You are hearing the throaty r contrast.",
+  items: [
+   {word:"carro", pron:"KAH-ho", hint:"Double rr is throaty, like French r."},
+   {word:"rua", pron:"HOO-ah", hint:"Initial r is throaty."},
+   {word:"arroz", pron:"ah-HOZH", hint:"Throaty rr; final z is not simple z."}
+  ]
+ },
+ {
+  rule: "Hard t",
+  focus: "Listen for a clean t. European Portuguese keeps t hard before i or final e. The contrast to perceive is t versus ch.",
+  correction: "Try again with a firm t. Do not let it become chee or chuh.",
+  success: "Good. You are hearing the hard t.",
+  items: [
+   {word:"noite", pron:"NOY-tuh", hint:"T stays t, not ch."},
+   {word:"vinte", pron:"VEEN-tuh", hint:"Not veen-chee."},
+   {word:"tia", pron:"TEE-ah", hint:"Not chee-ah."}
+  ]
+ },
+ {
+  rule: "Hard d",
+  focus: "Listen for a clean d. European Portuguese keeps d hard before i or final e. The contrast to perceive is d versus j.",
+  correction: "Try again with a firm d. Do not let it become jee or juh.",
+  success: "Good. You are hearing the hard d.",
+  items: [
+   {word:"cidade", pron:"si-DAHD", hint:"D stays d, not j."},
+   {word:"dia", pron:"DEE-ah", hint:"Not jee-ah."},
+   {word:"saudade", pron:"sow-DAHD", hint:"Avoid jee ending."}
+  ]
+ },
+ {
+  rule: "Dark l",
+  focus: "Listen for a darker final l. It is not an oo ending. The contrast to perceive is final l versus vowel-like oo.",
+  correction: "Try again and let the word end with a real dark l, as in bell or pull.",
+  success: "Good. You are hearing the dark final l.",
+  items: [
+   {word:"Portugal", pron:"por-tu-GAHL", hint:"Final l is dark, like bell or pull."},
+   {word:"Brasil", pron:"bra-ZEEL", hint:"End with l, not oo."},
+   {word:"papel", pron:"pa-PELL", hint:"Final l is dark."}
+  ]
+ },
+ {
+  rule: "lh",
+  focus: "Listen for the ly sound. lh is not simple l plus h. The contrast to perceive is plain l versus ly.",
+  correction: "Try again with a crisp ly sound, like the middle of million.",
+  success: "Good. You are hearing the lh / ly sound.",
+  items: [
+   {word:"filho", pron:"FEE-lyo", hint:"lh sounds like lli in million."},
+   {word:"trabalho", pron:"tra-BA-lyo", hint:"Do not say lee-ho."},
+   {word:"velha", pron:"VEL-ya", hint:"Crisp ly sound."}
+  ]
+ },
+ {
+  rule: "nh",
+  focus: "Listen for the ny sound. nh is not n plus h. The contrast to perceive is plain n versus ny.",
+  correction: "Try again with ny, like canyon. Do not pronounce the h.",
+  success: "Good. You are hearing the nh / ny sound.",
+  items: [
+   {word:"vinho", pron:"VEEN-yo", hint:"nh sounds like ny in canyon."},
+   {word:"senhor", pron:"sen-YOR", hint:"Use ny, not h."},
+   {word:"amanhã", pron:"a-ma-NYAH", hint:"Nasal ending; ny sound."}
+  ]
+ }
 ];
 
 const ruleSelect = document.getElementById("ruleSelect");
@@ -196,6 +244,7 @@ const wordSelect = document.getElementById("wordSelect");
 const wordText = document.getElementById("wordText");
 const pronText = document.getElementById("pronText");
 const hintText = document.getElementById("hintText");
+const feedbackText = document.getElementById("feedbackText");
 const statusText = document.getElementById("statusText");
 const playback = document.getElementById("playback");
 const speakBtn = document.getElementById("speakBtn");
@@ -203,116 +252,138 @@ const recordBtn = document.getElementById("recordBtn");
 const stopBtn = document.getElementById("stopBtn");
 const retryBtn = document.getElementById("retryBtn");
 const nextBtn = document.getElementById("nextBtn");
+const goodBtn = document.getElementById("goodBtn");
+const againBtn = document.getElementById("againBtn");
 
 let recorder = null;
 let chunks = [];
 let activeStream = null;
 
 function loadRules() {
-  ruleSelect.innerHTML = "";
-  DATA.forEach(function(group, index) {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = group.rule;
-    ruleSelect.appendChild(option);
-  });
-  loadWords();
+ ruleSelect.innerHTML = "";
+ DATA.forEach(function(group, index) {
+  const option = document.createElement("option");
+  option.value = index;
+  option.textContent = group.rule;
+  ruleSelect.appendChild(option);
+ });
+ loadWords();
 }
 
 function loadWords() {
-  const group = DATA[Number(ruleSelect.value)];
-  wordSelect.innerHTML = "";
-  group.items.forEach(function(item, index) {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = item.word;
-    wordSelect.appendChild(option);
-  });
-  updateDisplay();
+ const group = DATA[Number(ruleSelect.value)];
+ wordSelect.innerHTML = "";
+ group.items.forEach(function(item, index) {
+  const option = document.createElement("option");
+  option.value = index;
+  option.textContent = item.word;
+  wordSelect.appendChild(option);
+ });
+ updateDisplay();
+}
+
+function currentGroup() {
+ return DATA[Number(ruleSelect.value)];
 }
 
 function currentItem() {
-  const group = DATA[Number(ruleSelect.value)];
-  return group.items[Number(wordSelect.value)];
+ const group = currentGroup();
+ return group.items[Number(wordSelect.value)];
 }
 
 function updateDisplay() {
-  const item = currentItem();
-  wordText.textContent = item.word;
-  pronText.textContent = "Say: " + item.pron;
-  hintText.textContent = item.hint;
-  statusText.textContent = "";
+ const group = currentGroup();
+ const item = currentItem();
+ wordText.textContent = item.word;
+ pronText.textContent = "Say: " + item.pron;
+ hintText.textContent = item.hint;
+ feedbackText.textContent = group.focus;
+ statusText.textContent = "";
+ playback.removeAttribute("src");
+ playback.load();
 }
 
 function speakModel() {
-  if (!("speechSynthesis" in window)) {
-    statusText.textContent = "Speech not supported in this browser.";
-    return;
-  }
-  window.speechSynthesis.cancel();
-  const item = currentItem();
-  const utterance = new SpeechSynthesisUtterance(item.word);
-  utterance.lang = "pt-PT";
-  utterance.rate = 0.72;
-  window.speechSynthesis.speak(utterance);
-  statusText.textContent = "Playing model.";
+ if (!("speechSynthesis" in window)) {
+  statusText.textContent = "Speech not supported in this browser.";
+  return;
+ }
+ window.speechSynthesis.cancel();
+ const item = currentItem();
+ const utterance = new SpeechSynthesisUtterance(item.word);
+ utterance.lang = "pt-PT";
+ utterance.rate = 0.72;
+ window.speechSynthesis.speak(utterance);
+ statusText.textContent = "Playing model.";
 }
 
 function startRecordingFlow() {
-  window.speechSynthesis.cancel();
-  statusText.textContent = "Recording in 2...";
-  setTimeout(function() { statusText.textContent = "Recording in 1..."; }, 1000);
-  setTimeout(startRecording, 2000);
+ window.speechSynthesis.cancel();
+ statusText.textContent = "Recording in 2...";
+ setTimeout(function() { statusText.textContent = "Recording in 1..."; }, 1000);
+ setTimeout(startRecording, 2000);
 }
 
 async function startRecording() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    statusText.textContent = "Recording not supported in this browser.";
-    return;
-  }
-
-  try {
-    activeStream = await navigator.mediaDevices.getUserMedia({audio: true});
-    chunks = [];
-    recorder = new MediaRecorder(activeStream);
-
-    recorder.ondataavailable = function(event) {
-      if (event.data && event.data.size > 0) chunks.push(event.data);
-    };
-
-    recorder.onstop = function() {
-      const blob = new Blob(chunks, {type: "audio/webm"});
-      playback.src = URL.createObjectURL(blob);
-      statusText.textContent = "Replay and compare.";
-      activeStream.getTracks().forEach(function(track) { track.stop(); });
-      activeStream = null;
-    };
-
-    recorder.start();
-    recordBtn.disabled = true;
-    stopBtn.disabled = false;
-    statusText.textContent = "Recording...";
-  } catch (err) {
-    statusText.textContent = "Mic blocked or unsupported here.";
-  }
+ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  statusText.textContent = "Recording not supported in this browser.";
+  return;
+ }
+ try {
+  activeStream = await navigator.mediaDevices.getUserMedia({audio: true});
+  chunks = [];
+  recorder = new MediaRecorder(activeStream);
+  recorder.ondataavailable = function(event) {
+   if (event.data && event.data.size > 0) chunks.push(event.data);
+  };
+  recorder.onstop = function() {
+   const blob = new Blob(chunks, {type: "audio/webm"});
+   playback.src = URL.createObjectURL(blob);
+   const group = currentGroup();
+   feedbackText.textContent = group.focus + " Replay your recording and compare it with the model.";
+   statusText.textContent = "Replay and compare.";
+   activeStream.getTracks().forEach(function(track) { track.stop(); });
+   activeStream = null;
+  };
+  recorder.start();
+  recordBtn.disabled = true;
+  stopBtn.disabled = false;
+  statusText.textContent = "Recording...";
+ } catch (err) {
+  statusText.textContent = "Mic blocked or unsupported here.";
+ }
 }
 
 function stopRecording() {
-  if (recorder && recorder.state !== "inactive") {
-    recorder.stop();
-  }
-  recordBtn.disabled = false;
-  stopBtn.disabled = true;
+ if (recorder && recorder.state !== "inactive") {
+  recorder.stop();
+ }
+ recordBtn.disabled = false;
+ stopBtn.disabled = true;
 }
 
 function nextWord() {
-  const count = DATA[Number(ruleSelect.value)].items.length;
-  wordSelect.value = (Number(wordSelect.value) + 1) % count;
-  updateDisplay();
+ const count = DATA[Number(ruleSelect.value)].items.length;
+ wordSelect.value = (Number(wordSelect.value) + 1) % count;
+ updateDisplay();
 }
 
 function retry() {
-  statusText.textContent = "Retry: hear model, then record again.";
+ const group = currentGroup();
+ feedbackText.textContent = group.focus;
+ statusText.textContent = "Retry: hear model, then record again.";
+}
+
+function perceivedGood() {
+ const group = currentGroup();
+ feedbackText.textContent = group.success + " Move to the next word when ready.";
+ statusText.textContent = "Perceived match marked.";
+}
+
+function notYet() {
+ const group = currentGroup();
+ feedbackText.textContent = group.correction;
+ statusText.textContent = "Use the corrective focus, then retry.";
 }
 
 ruleSelect.addEventListener("change", loadWords);
@@ -322,8 +393,15 @@ recordBtn.addEventListener("click", startRecordingFlow);
 stopBtn.addEventListener("click", stopRecording);
 nextBtn.addEventListener("click", nextWord);
 retryBtn.addEventListener("click", retry);
+goodBtn.addEventListener("click", perceivedGood);
+againBtn.addEventListener("click", notYet);
 
 loadRules();
 </script>
 </body>
 </html>
+'''
+
+path = Path("/mnt/data/index_v0_3_0.html")
+path.write_text(html, encoding="utf-8")
+print(f"Created {path} ({path.stat().st_size} bytes)")
